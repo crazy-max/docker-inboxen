@@ -129,7 +129,7 @@ Superuser created successfully.
 
 ## Upgrade
 
-To upgrade to the latest version of Inboxen, pull the newer image and launch the container. Inboxen will upgrade automatically :
+To upgrade to the latest version, pull the newer image and launch the container. Inboxen will upgrade automatically :
 
 ```bash
 docker-compose pull
