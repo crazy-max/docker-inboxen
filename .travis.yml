@@ -1,0 +1,69 @@
+sudo: required
+
+services:
+  - docker
+
+env:
+  global:
+    - VERSION=master-d6a9a1d
+    - DOCKER_USERNAME=crazymax
+    - DOCKER_REPONAME=inboxen
+    - QUAY_USERNAME=crazymax
+    - QUAY_REPONAME=inboxen
+    - secure: Rd3MfyeNZMUxqZj+7wCCMrxs5hiJm66+IBL8x27iw3Yq1McI++2JJD0IZwdniNYN+SNVzSdHwCDaJ5bG2iZpR6jeWg25+v0b5JIlPkZLvXMKzvBdY/SCNCu7lk88J1x2GHDtHPSS0dJ2hcVJI14DQ/qTf9yGqcM2Xz02VCKcgoUgpx/SP+PoNHiClZTxQflT6LBHK3wOXGcbowYQ134E5sVFaHsXGMnlTOwImMd/O50Mw+gkvGkBnkNW0eaCzWHw3efHysqk9VhPyvKSkDi8MAn94gibpIXSJvG9cWecVwtzWVPOKnsFnJEE4wA6UjFF9Ky+HFLH9yHNOu7sOcw3Hl1ed/iFQPGm931vXXjlUMb2HiDqFcLoK4f+BY/URSR9nIBQ0M3iPGvUqupAoJdFP579jghVwV98gf9nXYtChOfmHNA/pSl7PUDzCWAbQBocHJ85/SZ7EH/7MUAfQq84v5aDADFzAe23Pn6VCKNEpt/5qOdx0l0rk65Kx17SXqQwh5ExYNZpnzz6Y1mTd/NHweoGFrnLU27eIB5P8jA9XTO+KyBbF4fJ7Ytduxx+7LSwwry1k6a5HAEs4iLMq2t7izwk1pw9U+dMQPKpG5H4pK7KjVYxJELSGeLCkegRXAScyGixiGrcYQvfUN7XKcIoOB6MMGGlrE9AUKOvzE4tEpg= # DOCKER_PASSWORD
+    - secure: hSwprjkM9cUFo7ukv/yKULe52fstEL2Ccvp6ATYkaPpAAPa4BFt5W8OrCF/Wi0YlY/12rjTM90vWfv0Gat9MnviI72C2Y27U05Qh2qW7rTJsxY6m5fVOWFJu0RnxQH8NI2+K9x12QGx5o4WhwrFGQtiZDkRQ/x/NOSGjOitFgV4OhT9IFq5x7Lvz/mcVKde9WfZcsd4M4DvVe51qgIb8F6o+GxFhReOeyu/lHiZo4fKtgFJDbm8vJ5JHhf+NIEU1wu4aeyGX1KQWYyj/jjyJGmPgfCTRaIpRAVcH9Zr9rwNB3oWV3zM+ejLYPBaVFzurmUNMaLGyA4l5f6kymbQ2e2qrm+i5puVvgrBOehfZrSSH8FDQ8wjGf8ZuVnbYwvxCW+x/aeZXwVJNMAFMGl3zJ5Cu0v76ELEUxSIZEzuQjSgNvMwE4pfR+DMLpu1vP6U09a/058ZSQxNlaShYm7bqQtAQzgyCWiIG4/c7Iu1L4fGeUz0JmzujwPrPayBiwImFmLwVYMZ4/H3yNI2Q1WrmSm5z6aQQBVjAxUo2uow8cGS5bMSa4iIfkYULJnbszgiJ/Xl+R5XW2bUXFR7s0sglREnfJ/Kdc5m6XMHlfL0AxV//MecYTGCPEgMpZ29EAjd8SjHfRpSe+0dF9c8jjg4fKeBS66ZOeE3s/EQb5P2LkQw= # QUAY_PASSWORD
+
+before_install:
+  - sudo apt-get update
+  - docker --version
+  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+  - export DOCKER_TAG=$(if [ "$BRANCH" == "master" ]; then echo "latest"; else echo $BRANCH; fi)
+  - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH, DOCKER_TAG=$DOCKER_TAG"
+
+install:
+  - |
+    docker build --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+    --build-arg VCS_REF=${TRAVIS_COMMIT::8} \
+    --build-arg VERSION=${VERSION} \
+    -t docker_build .
+
+before_script:
+  - docker network create -d bridge $DOCKER_REPONAME
+  - docker run -d --network=$DOCKER_REPONAME --name rabbitmq --hostname rabbitmq rabbitmq:3.7
+  - |
+    docker run -d --network=$DOCKER_REPONAME --name db --hostname db \
+    -e "POSTGRES_DB=inboxen" \
+    -e "POSTGRES_USER=inboxen" \
+    -e "POSTGRES_PASSWORD=inboxen" \
+    postgres:9.6
+  - |
+    docker run -d --network=$DOCKER_REPONAME --link db --link rabbitmq -p 8000:8080 \
+    -e "IB_DB_HOST=db" \
+    -e "IB_DB_NAME=inboxen" \
+    -e "IB_DB_USER=inboxen" \
+    -e "IB_DB_PASSWORD=inboxen" \
+    -e "IB_TASKS_BROKER_URL=amqp://guest:guest@rabbitmq:5672//" \
+    --name $DOCKER_REPONAME docker_build
+  - sleep 15
+  - docker logs $DOCKER_REPONAME
+
+script:
+  - docker ps | grep $DOCKER_REPONAME
+  - |
+    test $TRAVIS_PULL_REQUEST = false \
+    && echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin \
+    && docker tag docker_build $DOCKER_USERNAME/$DOCKER_REPONAME:$DOCKER_TAG \
+    && docker tag docker_build $DOCKER_USERNAME/$DOCKER_REPONAME:$VERSION \
+    && docker push $DOCKER_USERNAME/$DOCKER_REPONAME \
+    && echo "$QUAY_PASSWORD" | docker login quay.io --username "$QUAY_USERNAME" --password-stdin \
+    && docker tag docker_build quay.io/$DOCKER_USERNAME/$DOCKER_REPONAME:$DOCKER_TAG \
+    && docker tag docker_build quay.io/$DOCKER_USERNAME/$DOCKER_REPONAME:$VERSION \
+    && docker push quay.io/$QUAY_USERNAME/$QUAY_REPONAME
+
+branches:
+  except:
+    - /^[0-9]/
+
+notifications:
+  webhooks:
+    secure: d+SGfzhUKWZodoxIfu+erv+hKHl5EQOsVbgdLVXr5SVY3qNLYBEr3BmKMGuJvfYPGhspYHjpsWFzEEWpvrCH59FfamFCSo9YpnN5xk9BgXnMIovfcYVEUyxIDHsGoqY5oCJ3v9S5DyPbP9CdaJNyyoCWMb+bK+gVY7YZPrZGDto2FLz8CiICQZFzAK4d6aTzZabFNGMz/i9FEfakgTueNdx9XEIGIGT0kzUEbn8y3dya4XiRUpNB3GVWjXGR4RFUTiE5hckNBmlyCtE82DNsjoVu9i9FzONlvefnMwbPinQq5YKpDcDBG5X4CJh2k/43kOTINg+RDS74JwsPV9Z0elO96iN5CmGbUuNGqs3cH80G4oRpRvDBP6Dc/fhnTN0QrwXj/3VAUrsbpQtsjsD4rDouxt/HDUPZdBu3feDSEw79/BIzOwjOntAr0I1sltC6Lj9e7wKG/7w9Xx5nL6UUyCcfEwJfDFhzp9MR9bmWT26TlF+vpDp+k8qVi+8jR5mJLEPO9xyvTr+7ujvnEeY384zoUj4p+EtAmh8i2koawEo/o4fS6fBm5oqQ6aGFDmhKZdy7OlF9vjsxoqx0YxntweDcL5WHgdtY8fqNW36tc0XRdRb/uXUCvLvXv0DF/CUqzAgDkvihz3ane9wGlvOulJIJXsI43RJ16eyx7LWhonQ=
