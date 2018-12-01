@@ -112,18 +112,6 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-### Command line
-
-You can also use the following minimal command :
-
-```bash
-$ docker run -d -p 5000:5000 --name inboxen \
-  -e TZ="Europe/Paris" \
-  -e FF_SYNCSERVER_SECRET="5up3rS3kr1t" \
-  -v $(pwd)/data:/data \
-  crazymax/inboxen:latest
-```
-
 ## Notes
 
 ### Add super user
