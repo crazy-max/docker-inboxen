@@ -1,5 +1,16 @@
 #!/bin/sh
 
+function fixperms() {
+  for folder in $@; do
+    if $(find ${folder} ! -user inboxen -o ! -group inboxen | egrep '.' -q); then
+      echo "Fixing permissions in $folder..."
+      chown -R inboxen. "${folder}"
+    else
+      echo "Permissions already fixed in ${folder}"
+    fi
+  done
+}
+
 function runas_inboxen() {
   su - inboxen -s /bin/sh -c "$1"
 }
@@ -85,10 +96,11 @@ backend = file
 location = /data/cache
 timeout = ${IB_CACHE_TIMEOUT:-"300"}
 EOL
+chown inboxen. /app/settings.ini
 
 # Fix perms
 echo "Fixing permissions..."
-chown -R inboxen. /app /data
+fixperms /app /data/cache /data/liberation /data/logs /data/media
 
 echo "Waiting ${DB_TIMEOUT}s for database to be ready..."
 counter=1
