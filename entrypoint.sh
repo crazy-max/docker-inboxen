@@ -34,8 +34,8 @@ if [[ -z "$IB_SECRET_KEY" -o -z "$IB_DB_HOST" -o -z "$IB_DB_USER" -o -z "$IB_DB_
   >&2 echo "ERROR: IB_SECRET_KEY, IB_DB_HOST, IB_DB_USER and IB_DB_PASSWORD must be defined"
   exit 1
 fi
-export PGPASSWORD=${IB_DB_PASSWORD}
-dbcmd="psql --host=${IB_DB_HOST} --port=${IB_DB_PORT:-"5432"} --username="${IB_DB_USER}" -lqt"
+PGPASSWORD=${IB_DB_PASSWORD}
+dbcmd="psql --host=${IB_DB_HOST} --port=${IB_DB_PORT:-5432} --username=${IB_DB_USER} -lqt"
 
 # https://github.com/Inboxen/Inboxen/blob/master/docs/settings.rst
 cat > /app/settings.ini <<EOL

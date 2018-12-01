@@ -78,7 +78,7 @@ COPY assets /
 RUN chmod a+x /entrypoint.sh
 
 EXPOSE 8080 8823
-WORKDIR "/app"
+WORKDIR /app
 VOLUME [ "/data" ]
 
 ENTRYPOINT [ "/entrypoint.sh" ]
