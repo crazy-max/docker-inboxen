@@ -90,7 +90,7 @@ if [ "${VERSION}" == "local" -o "${TRAVIS_PULL_REQUEST}" == "true" ]; then
 fi
 if [[ ! -z ${DOCKER_PASSWORD} ]]; then
   echo "### Push to Docker Hub..."
-  echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+  echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin > /dev/null 2>&1
   docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${DOCKER_TAG}
   docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${VERSION}
   docker push ${DOCKER_USERNAME}/${DOCKER_REPONAME}
@@ -102,7 +102,7 @@ if [[ ! -z ${DOCKER_PASSWORD} ]]; then
 fi
 if [[ ! -z ${QUAY_PASSWORD} ]]; then
   echo "### Push to Quay..."
-  echo "$QUAY_PASSWORD" | docker login quay.io --username "$QUAY_USERNAME" --password-stdin
+  echo "$QUAY_PASSWORD" | docker login quay.io --username "$QUAY_USERNAME" --password-stdin > /dev/null 2>&1
   docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${DOCKER_TAG}
   docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${VERSION}
   docker push quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}
