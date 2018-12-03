@@ -8,17 +8,20 @@ VCS_REF=${TRAVIS_COMMIT::8}
 RUNNING_TIMEOUT=120
 RUNNING_LOG_CHECK="uwsgi entered RUNNING state"
 
+PUSH_LATEST=${PUSH_LATEST:-true}
 DOCKER_USERNAME=${DOCKER_USERNAME:="crazymax"}
+DOCKER_LOGIN=${DOCKER_LOGIN:="crazymax"}
 DOCKER_REPONAME=${DOCKER_REPONAME:="inboxen"}
 QUAY_USERNAME=${QUAY_USERNAME:="crazymax"}
+QUAY_LOGIN=${QUAY_LOGIN:="crazymax"}
 QUAY_REPONAME=${QUAY_REPONAME:="inboxen"}
 
 # Check local or travis
-BRANCH=${TRAVIS_BRANCH:-"local"}
+BRANCH=${TRAVIS_BRANCH:-local}
 if [[ ${TRAVIS_PULL_REQUEST} == "true" ]]; then
   BRANCH=${TRAVIS_PULL_REQUEST_BRANCH}
 fi
-DOCKER_TAG=${BRANCH:-"local"}
+DOCKER_TAG=${BRANCH:-local}
 if [[ "$BRANCH" == "master" ]]; then
   DOCKER_TAG=latest
 elif [[ "$BRANCH" == "local" ]]; then
@@ -27,11 +30,15 @@ elif [[ "$BRANCH" == "local" ]]; then
 fi
 
 echo "PROJECT=${PROJECT}"
+echo "VERSION=${VERSION}"
 echo "BUILD_DATE=${BUILD_DATE}"
 echo "BUILD_TAG=${BUILD_TAG}"
 echo "VCS_REF=${VCS_REF}"
+echo "PUSH_LATEST=${PUSH_LATEST}"
+echo "DOCKER_LOGIN=${DOCKER_LOGIN}"
 echo "DOCKER_USERNAME=${DOCKER_USERNAME}"
 echo "DOCKER_REPONAME=${DOCKER_REPONAME}"
+echo "QUAY_LOGIN=${QUAY_LOGIN}"
 echo "QUAY_USERNAME=${QUAY_USERNAME}"
 echo "QUAY_REPONAME=${QUAY_REPONAME}"
 echo "TRAVIS_BRANCH=${TRAVIS_BRANCH}"
@@ -79,9 +86,11 @@ while read LOGLINE; do
   fi
   if [[ $SECONDS -gt ${TIMEOUT} ]]; then
     >&2 echo "ERROR: Failed to run ${PROJECT} container"
+    docker rm -f ${PROJECT} > /dev/null 2>&1 || true
     exit 1
   fi
-done < <(docker logs -f ${PROJECT})
+done < <(docker logs -f ${PROJECT} 2>&1)
+docker rm -f ${PROJECT} > /dev/null 2>&1 || true
 echo
 
 if [ "${VERSION}" == "local" -o "${TRAVIS_PULL_REQUEST}" == "true" ]; then
@@ -90,20 +99,30 @@ if [ "${VERSION}" == "local" -o "${TRAVIS_PULL_REQUEST}" == "true" ]; then
 fi
 if [[ ! -z ${DOCKER_PASSWORD} ]]; then
   echo "### Push to Docker Hub..."
-  echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin > /dev/null 2>&1
-  docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${DOCKER_TAG}
-  docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${VERSION}
+  echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_LOGIN" --password-stdin > /dev/null 2>&1
+  if [ "${DOCKER_TAG}" == "latest" -a "${PUSH_LATEST}" == "true" ]; then
+    docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${DOCKER_TAG}
+  fi
+  if [[ "${VERSION}" != "latest" ]]; then
+    docker tag ${BUILD_TAG} ${DOCKER_USERNAME}/${DOCKER_REPONAME}:${VERSION}
+  fi
   docker push ${DOCKER_USERNAME}/${DOCKER_REPONAME}
-  if [[ ! -z ${DOCKER_PASSWORD} ]]; then
+  if [[ ! -z ${MICROBADGER_HOOK} ]]; then
     echo "Call MicroBadger hook"
     curl -X POST ${MICROBADGER_HOOK}
+    echo
   fi
   echo
 fi
 if [[ ! -z ${QUAY_PASSWORD} ]]; then
   echo "### Push to Quay..."
-  echo "$QUAY_PASSWORD" | docker login quay.io --username "$QUAY_USERNAME" --password-stdin > /dev/null 2>&1
-  docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${DOCKER_TAG}
-  docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${VERSION}
+  echo "$QUAY_PASSWORD" | docker login quay.io --username "$QUAY_LOGIN" --password-stdin > /dev/null 2>&1
+  if [ "${DOCKER_TAG}" == "latest" -a "${PUSH_LATEST}" == "true" ]; then
+    docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${DOCKER_TAG}
+  fi
+  if [[ "${VERSION}" != "latest" ]]; then
+    docker tag ${BUILD_TAG} quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}:${VERSION}
+  fi
   docker push quay.io/${QUAY_USERNAME}/${QUAY_REPONAME}
+  echo
 fi
