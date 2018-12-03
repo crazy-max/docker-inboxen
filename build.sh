@@ -80,7 +80,7 @@ echo "### Waiting for ${PROJECT} to be up..."
 TIMEOUT=$((SECONDS + RUNNING_TIMEOUT))
 while read LOGLINE; do
   echo ${LOGLINE}
-  if [[ "${LOGLINE#*$RUNNING_LOG_CHECK}" != "$LOGLINE" ]]; then
+  if [[ ${LOGLINE} == *"${RUNNING_LOG_CHECK}"* ]]; then
     echo "Container up!"
     break
   fi
