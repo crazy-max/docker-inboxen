@@ -4,17 +4,19 @@ set -e
 PROJECT=inboxen
 BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_TAG=docker_build
+BUILD_WORKINGDIR=${BUILD_WORKINGDIR:-.}
+DOCKERFILE=${DOCKERFILE:-Dockerfile}
 VCS_REF=${TRAVIS_COMMIT::8}
 RUNNING_TIMEOUT=120
 RUNNING_LOG_CHECK="uwsgi entered RUNNING state"
 
 PUSH_LATEST=${PUSH_LATEST:-true}
-DOCKER_USERNAME=${DOCKER_USERNAME:="crazymax"}
-DOCKER_LOGIN=${DOCKER_LOGIN:="crazymax"}
-DOCKER_REPONAME=${DOCKER_REPONAME:="inboxen"}
-QUAY_USERNAME=${QUAY_USERNAME:="crazymax"}
-QUAY_LOGIN=${QUAY_LOGIN:="crazymax"}
-QUAY_REPONAME=${QUAY_REPONAME:="inboxen"}
+DOCKER_USERNAME=${DOCKER_USERNAME:-crazymax}
+DOCKER_LOGIN=${DOCKER_LOGIN:-crazymax}
+DOCKER_REPONAME=${DOCKER_REPONAME:-inboxen}
+QUAY_USERNAME=${QUAY_USERNAME:-crazymax}
+QUAY_LOGIN=${QUAY_LOGIN:-crazymax}
+QUAY_REPONAME=${QUAY_REPONAME:-inboxen}
 
 # Check local or travis
 BRANCH=${TRAVIS_BRANCH:-local}
@@ -53,12 +55,12 @@ docker build \
   --build-arg BUILD_DATE=${BUILD_DATE} \
   --build-arg VCS_REF=${VCS_REF} \
   --build-arg VERSION=${VERSION} \
-  -t ${BUILD_TAG} .
+  -t ${BUILD_TAG} -f ${DOCKERFILE} ${BUILD_WORKINGDIR}
 echo
 
 echo "### Test"
-docker rm -f ${PROJECT} ${PROJECT}-rabbitmq ${PROJECT}-db || true
-docker network rm ${PROJECT} || true
+docker rm -f ${PROJECT} ${PROJECT}-rabbitmq ${PROJECT}-db > /dev/null 2>&1 || true
+docker network rm ${PROJECT} > /dev/null 2>&1 || true
 docker network create -d bridge ${PROJECT}
 docker run -d --network=${PROJECT} --name ${PROJECT}-rabbitmq --hostname ${PROJECT}-rabbitmq rabbitmq:3.7
 docker run -d --network=${PROJECT} --name ${PROJECT}-db --hostname ${PROJECT}-db \
