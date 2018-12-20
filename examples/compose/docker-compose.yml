@@ -10,7 +10,7 @@ services:
       - "--entryPoints=Name:https Address::443 TLS"
       - "--docker"
       - "--docker.exposedbydefault=false"
-      - "--docker.domain=${DOMAINNAME}"
+      - "--docker.domain=example.com"
       - "--acme=false"
       - "--acme.acmelogging=true"
       - "--acme.email=webmaster@example.com"
@@ -64,7 +64,7 @@ services:
       - "traefik.enable=true"
       - "traefik.backend=inboxen"
       - "traefik.port=8080"
-      - "traefik.frontend.rule=Host:${HOSTNAME}.${DOMAINNAME}"
+      - "traefik.frontend.rule=Host:inboxen.example.com"
     env_file:
       - "./inboxen.env"
     environment:
