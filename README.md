@@ -119,7 +119,7 @@ docker-compose logs -f
 On first launch, you will have to create a super user to handle administration through `/admin` :
 
 ```
-$ docker exec -it --user inboxen inboxen sh -c ". env/bin/activate && ./manage.py createsuperuser --username <username> --email <email>"
+$ docker-compose exec --user inboxen inboxen sh -c ". env/bin/activate && ./manage.py createsuperuser --username <username> --email <email>"
 Password:
 Password (again):
 Superuser created successfully.

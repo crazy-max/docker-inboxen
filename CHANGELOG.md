@@ -1,5 +1,9 @@
 # Changelog
 
+## deploy-20190110-RC1 (2019/01/10)
+
+* Upgrade to Inboxen deploy-20190110
+
 ## master-25bca97-RC1 (2019/01/08)
 
 * Upgrade to Inboxen/Inboxen@25bca97
