@@ -19,7 +19,7 @@ If you are interested, [check out](https://hub.docker.com/r/crazymax/) my other 
 
 ### Included
 
-* Alpine Linux 3.8
+* Alpine Linux 3.9
 * Inboxen [WSGI daemon](https://github.com/Inboxen/Inboxen/blob/master/inboxen/wsgi.py) served through [uWSGI](https://uwsgi-docs.readthedocs.io) and Nginx
 * Nginx serves /static/ from `app/static` content through [Django collectstatic](https://docs.djangoproject.com/en/1.11/ref/contrib/staticfiles/#collectstatic)
 * [Salmon](https://salmon-mail.readthedocs.io) mail server available through port `8823`
