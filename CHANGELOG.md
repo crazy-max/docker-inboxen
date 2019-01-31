@@ -1,5 +1,9 @@
 # Changelog
 
+## deploy-20190110-RC2 (2019/01/31)
+
+* Alpine Linux 3.9
+
 ## deploy-20190110-RC1 (2019/01/10)
 
 * Upgrade to Inboxen deploy-20190110
