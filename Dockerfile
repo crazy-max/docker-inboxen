@@ -15,8 +15,8 @@ LABEL maintainer="CrazyMax" \
   org.label-schema.vendor="CrazyMax" \
   org.label-schema.schema-version="1.0"
 
-ENV INBOXEN_VERSION="deploy-20190110" \
-  SHA1_COMMIT="2998ce0987a352d62cc1e2fd4e34215e9c3e85ff" \
+ENV INBOXEN_VERSION="deploy-20190609" \
+  SHA1_COMMIT="814df22f551511313a840dc40eff9e3e508ee330" \
   DJANGO_SETTINGS_MODULE="inboxen.settings" \
   SALMON_SETTINGS_MODULE="inboxen.router.config.settings"
 

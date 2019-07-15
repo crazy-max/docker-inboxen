@@ -5,7 +5,7 @@ services:
 
 env:
   global:
-    - VERSION=deploy-20190110
+    - VERSION=deploy-20190609
     - DOCKER_USERNAME=crazymax
     - DOCKER_REPONAME=inboxen
     - DOCKER_LOGIN=crazymax
