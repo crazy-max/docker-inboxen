@@ -20,17 +20,11 @@ If you are interested, [check out](https://hub.docker.com/r/crazymax/) my other 
 
 ## Features
 
-### Included
-
-* Alpine Linux 3.10
 * Inboxen [WSGI daemon](https://github.com/Inboxen/Inboxen/blob/master/inboxen/wsgi.py) served through [uWSGI](https://uwsgi-docs.readthedocs.io) and Nginx
 * Nginx serves /static/ from `app/static` content through [Django collectstatic](https://docs.djangoproject.com/en/1.11/ref/contrib/staticfiles/#collectstatic)
 * [Salmon](https://salmon-mail.readthedocs.io) mail server available through port `8823`
 * [Celery](http://docs.celeryproject.org/en/latest/index.html) served as a distributed task queue for RabbitMQ
 * Automatic DB migration
-
-### From docker-compose
-
 * [Traefik](https://github.com/containous/traefik-library-image) as reverse proxy and creation/renewal of Let's Encrypt certificates
 * [PostgreSQL](https://github.com/docker-library/postgres) image as database instance
 * [RabbitMQ](https://github.com/docker-library/rabbitmq) image for message queue
